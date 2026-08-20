@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2D4A3E">
+<title>Sēva · Contenido</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FAF7F2;
+  --cream2:#F2EDE3;
+  --forest:#2D4A3E;
+  --forest-dk:#1E3229;
+  --forest-lt:#4A6B5C;
+  --gold:#B08D57;
+  --tx:#2A2A26;
+  --tx2:#6B675F;
+  --bd:#E4DFD3;
+  --pend:#C7A15A;
+  --listo:#5B87A6;
+  --pub:#4A7C5E;
+  --sh:0 1px 3px rgba(45,74,62,.08), 0 6px 18px rgba(45,74,62,.08);
+  --nh:74px;
+  --hh:64px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--cream);}
+body{font-family:'Montserrat',sans-serif; color:var(--tx);}
+h1,h2,h3,.serif{font-family:'Cormorant Garamond',serif;}
+
+#loading{
+  position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--forest); color:var(--cream); gap:16px; z-index:999;
+}
+#loading .brand{font-family:'Cormorant Garamond',serif; font-size:34px; letter-spacing:2px;}
+.spinner{width:28px;height:28px;border:2.5px solid rgba(250,247,242,.25); border-top-color:var(--cream); border-radius:50%; animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loading button{margin-top:10px; background:var(--cream); color:var(--forest); border:none; padding:10px 22px; border-radius:20px; font-weight:600; font-family:'Montserrat',sans-serif;}
+
+#app{display:none; flex-direction:column; height:100dvh; width:100%; position:relative;}
+
+/* Header */
+#hdr{
+  background:linear-gradient(135deg, var(--forest-dk) 0%, var(--forest) 70%);
+  color:var(--cream); height:var(--hh); min-height:var(--hh);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px; position:relative; z-index:5;
+}
+#hdr .title{font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; display:flex; align-items:center; gap:8px;}
+#hdr .sub{font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; opacity:.75; font-weight:500;}
+
+/* Week selector */
+#weekbar{
+  display:flex; gap:8px; padding:12px 14px; overflow-x:auto; background:var(--cream);
+  border-bottom:1px solid var(--bd); flex-shrink:0; -webkit-overflow-scrolling:touch;
+}
+#weekbar::-webkit-scrollbar{display:none;}
+.wk-chip{
+  flex-shrink:0; padding:8px 16px; border-radius:16px; background:#fff; border:1px solid var(--bd);
+  font-size:12.5px; font-weight:600; color:var(--tx2); white-space:nowrap; cursor:pointer;
+}
+.wk-chip.active{background:var(--forest); color:var(--cream); border-color:var(--forest);}
+
+/* Week theme banner */
+#themebar{padding:14px 18px 8px; flex-shrink:0;}
+#themebar .label{font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); font-weight:700;}
+#themebar h2{margin:2px 0 0; font-size:26px; color:var(--forest); font-weight:600;}
+#themebar .range{font-size:12px; color:var(--tx2); margin-top:2px;}
+
+/* Day scroller */
+#days{flex:1; overflow-y:auto; padding:8px 14px 100px; -webkit-overflow-scrolling:touch;}
+.day-group{margin-bottom:18px;}
+.day-hdr{display:flex; align-items:baseline; gap:10px; padding:6px 4px; position:sticky; top:0; background:var(--cream); z-index:2;}
+.day-hdr .dname{font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:var(--forest);}
+.day-hdr .ddate{font-size:11px; color:var(--tx2);}
+.day-hdr .today-badge{font-size:9.5px; background:var(--gold); color:#fff; padding:2px 8px; border-radius:10px; font-weight:700; letter-spacing:.5px;}
+
+.card{
+  background:#fff; border-radius:16px; padding:14px 15px; margin:6px 0;
+  box-shadow:var(--sh); cursor:pointer; transition:transform .1s; border-left:4px solid var(--bd);
+}
+.card:active{transform:scale(.99);}
+.card.pendiente{border-left-color:var(--pend);}
+.card.listo{border-left-color:var(--listo);}
+.card.publicado{border-left-color:var(--pub);}
+.card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.card-plat{font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--tx2); font-weight:700;}
+.card-status{font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:10px; text-transform:uppercase; letter-spacing:.4px; flex-shrink:0;}
+.card-status.pendiente{background:#F7EAD0; color:#8A6A2A;}
+.card-status.listo{background:#DCEAF2; color:#2D5A78;}
+.card-status.publicado{background:#DCEEE0; color:#2D5A3E;}
+.card-tipo{font-size:14.5px; font-weight:600; color:var(--tx); margin-top:4px;}
+.card-hook{font-size:13px; color:var(--tx2); margin-top:4px; line-height:1.4;}
+.empty-day{font-size:12.5px; color:var(--tx2); font-style:italic; padding:8px 4px 4px;}
+
+/* Nav */
+#nav{
+  background:#fff; border-top:1px solid var(--bd); height:var(--nh);
+  display:flex; padding-bottom:env(safe-area-inset-bottom); flex-shrink:0; position:relative; z-index:5;
+}
+.nav-btn{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; background:none; border:none; color:var(--tx2); font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:600;}
+.nav-btn.active{color:var(--forest);}
+.nav-ico{width:20px; height:20px;}
+
+/* FAB */
+.fab{
+  position:fixed; bottom:calc(var(--nh) + 16px); right:18px; width:56px; height:56px; border-radius:18px;
+  background:linear-gradient(135deg, var(--forest), var(--forest-lt)); color:#fff; font-size:28px;
+  box-shadow:0 6px 20px rgba(45,74,62,.4); border:none; z-index:20; display:flex; align-items:center; justify-content:center;
+}
+
+/* Modal */
+.modal{position:fixed; inset:0; background:rgba(30,50,41,.55); z-index:100; display:none; align-items:flex-end; backdrop-filter:blur(3px);}
+.modal.on{display:flex;}
+.modal-sheet{background:var(--cream); border-radius:22px 22px 0 0; width:100%; max-height:92dvh; overflow-y:auto; animation:slideUp .25s cubic-bezier(.32,.72,0,1); padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+@keyframes slideUp{from{transform:translateY(100%)} to{transform:translateY(0)}}
+.sheet-handle{width:36px; height:4px; background:var(--bd); border-radius:2px; margin:10px auto;}
+.sheet-inner{padding:6px 20px 20px;}
+.sheet-close{position:absolute; top:14px; right:16px; background:rgba(0,0,0,.06); border:none; width:30px; height:30px; border-radius:50%; font-size:16px; color:var(--tx2);}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--tx2); margin-bottom:6px;}
+.field input, .field select, .field textarea{
+  width:100%; border:1px solid var(--bd); border-radius:12px; padding:11px 13px; font-family:'Montserrat',sans-serif;
+  font-size:14.5px; background:#fff; color:var(--tx); resize:vertical;
+}
+.field textarea{min-height:80px; line-height:1.5;}
+.status-row{display:flex; gap:8px;}
+.status-opt{flex:1; padding:10px; border-radius:12px; border:1.5px solid var(--bd); text-align:center; font-size:12.5px; font-weight:700; cursor:pointer; background:#fff;}
+.status-opt.sel-pendiente{background:#F7EAD0; border-color:var(--pend); color:#8A6A2A;}
+.status-opt.sel-listo{background:#DCEAF2; border-color:var(--listo); color:#2D5A78;}
+.status-opt.sel-publicado{background:#DCEEE0; border-color:var(--pub); color:#2D5A3E;}
+
+.btn-row{display:flex; gap:10px; margin-top:6px;}
+.btn{flex:1; padding:14px; border-radius:14px; border:none; font-weight:700; font-size:14.5px; font-family:'Montserrat',sans-serif;}
+.btn-primary{background:var(--forest); color:var(--cream);}
+.btn-danger{background:#fff; color:#B0473F; border:1.5px solid #E8C9C5;}
+
+.detail-hook{font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--forest); font-weight:600; line-height:1.35; margin:4px 0 14px;}
+.detail-block{margin-bottom:16px;}
+.detail-block .lbl{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--gold); margin-bottom:5px;}
+.detail-block .val{font-size:14px; line-height:1.55; white-space:pre-wrap; color:var(--tx);}
+.detail-block .val.empty{color:var(--tx2); font-style:italic;}
+
+#toast{
+  position:fixed; bottom:calc(var(--nh) + 14px); left:50%; transform:translateX(-50%) translateY(90px);
+  background:var(--forest-dk); color:#fff; padding:10px 20px; border-radius:14px; font-size:13px; font-weight:600;
+  z-index:999; transition:transform .28s cubic-bezier(.32,.72,0,1); white-space:nowrap;
+}
+#toast.on{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="brand">SĒVA</div>
+  <div class="spinner"></div>
+  <div id="loadmsg" style="font-size:13px; opacity:.8;">Conectando…</div>
+</div>
+
+<div id="app">
+  <div id="hdr">
+    <div class="title">SĒVA</div>
+    <div class="sub">Calendario de contenido</div>
+  </div>
+
+  <div id="weekbar"></div>
+  <div id="themebar"></div>
+  <div id="days"></div>
+
+  <button class="fab" onclick="openNew()">+</button>
+
+  <div id="nav">
+    <button class="nav-btn active" onclick="setTab('semana')">📅 Semana</button>
+    <button class="nav-btn" onclick="setTab('todos')">📋 Todos</button>
+  </div>
+</div>
+
+<!-- Modal: detalle -->
+<div class="modal" id="modalDetail" onclick="closeMO(event,'modalDetail')">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeModal('modalDetail')">✕</button>
+    <div class="sheet-inner" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- Modal: crear/editar -->
+<div class="modal" id="modalEdit" onclick="closeMO(event,'modalEdit')">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeModal('modalEdit')">✕</button>
+    <div class="sheet-inner">
+      <h3 class="serif" style="margin:0 0 16px; font-size:22px; color:var(--forest);" id="editTitle">Nueva publicación</h3>
+
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" id="f_fecha">
+      </div>
+      <div class="field">
+        <label>Plataforma</label>
+        <select id="f_plataforma">
+          <option>Instagram Feed</option>
+          <option>Stories</option>
+          <option>Stories/Reel</option>
+          <option>TikTok</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo de contenido</label>
+        <input type="text" id="f_tipo" placeholder="Ej. Producto — Sēva Romero">
+      </div>
+      <div class="field">
+        <label>Hook / idea principal</label>
+        <textarea id="f_hook" placeholder="El texto que engancha…"></textarea>
+      </div>
+      <div class="field">
+        <label>Descripción visual</label>
+        <textarea id="f_visual" placeholder="Qué se ve en la imagen o video…"></textarea>
+      </div>
+      <div class="field">
+        <label>Caption completo</label>
+        <textarea id="f_caption" placeholder="Texto completo listo para publicar…" style="min-height:120px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Hashtags</label>
+        <input type="text" id="f_hashtags" placeholder="#seva #sevabar …">
+      </div>
+      <div class="field">
+        <label>Notas internas</label>
+        <textarea id="f_notas" placeholder="Pendientes, contexto, recordatorios…"></textarea>
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <div class="status-row">
+          <div class="status-opt" id="stat_pendiente" onclick="setStatus('pendiente')">Pendiente</div>
+          <div class="status-opt" id="stat_listo" onclick="setStatus('listo')">Listo</div>
+          <div class="status-opt" id="stat_publicado" onclick="setStatus('publicado')">Publicado</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-danger" id="btnDelete" style="display:none;" onclick="deleteItem()">Eliminar</button>
+        <button class="btn btn-primary" onclick="saveItem()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============== ALMACENAMIENTO LOCAL (localStorage) — sin conexión externa ============== */
+const STORAGE_KEY = 'seva_contenido_v1';
+
+const SEED_ITEMS = [{"fecha": "2026-08-25", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Lunes", "plataforma": "Instagram Feed", "tipo": "Lanzamiento de marca", "hook": "Carrusel de 5 diapositivas", "visual": "Carrusel completo: 1) botellas problema, 2) repisa botellas repetidas, 3) barra mojándose, 4) flat lay con sello + revelación de marca, 5) cierre tipográfico SĒVA", "caption": "Hay algo raro en comprar agua dentro de una botella de plástico, una y otra vez, sin pensarlo.\n\nSĒVA nace de una pregunta simple: ¿qué pasaría si el ritual de cuidarte no necesitara un envase?\n\nShampoo en barra, hecho a mano en México. Sin sulfatos, sin plástico — con un ritual que por fin tiene sentido.\n\nEsto apenas empieza.", "hashtags": "#seva #sevabar #shampooenbarramx #zerowaste #cosméticanatural #ritualdebelleza #slowbeauty #hechoenmexicodf", "estado": "listo", "notas": "Carrusel ya generado y aprobado. Falta elegir audio (piano ambient / acoustic calm).", "id": "seed-2026-08-25-0"}, {"fecha": "2026-08-26", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Martes", "plataforma": "Stories", "tipo": "Detrás de cámaras", "hook": "Cadena de 2-3 stories", "visual": "Proceso real de producción: barras recién salidas del molde, espacio de trabajo. Cámara al hombro, sin guion.", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Humaniza la marca justo después del carrusel pulido del lunes.", "id": "seed-2026-08-26-1"}, {"fecha": "2026-08-27", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Miércoles", "plataforma": "Instagram Feed", "tipo": "Producto — Sēva Romero", "hook": "El problema no es tu pelo. Es que nadie te explicó esto sobre la caída de cabello.", "visual": "PENDIENTE — foto de producto de Romero aún no generada", "caption": "El problema no es tu pelo. Es que nadie te explicó esto sobre la caída de cabello.\n\nSēva Romero ataca la causa, no solo el síntoma — con romero real, sin sulfatos, en barra sólida.\n\n45-70 lavados por barra. Tu ritual, sin plástico.", "hashtags": "#sevaromero #anticaida #cuidadocapilar #shampooenbarra #seva", "estado": "pendiente", "notas": "Primera publicación con CTA de compra real. Necesita foto de producto.", "id": "seed-2026-08-27-2"}, {"fecha": "2026-08-28", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Jueves", "plataforma": "Stories", "tipo": "Educativo + Encuesta", "hook": "Dato de romero + encuesta", "visual": "Dato: el romero se usa desde hace siglos para fortalecer el cabello. Encuesta: ¿Cabello graso o con caída? 🌿🖤", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "La respuesta da inteligencia real: qué SKU promover más la próxima semana.", "id": "seed-2026-08-28-3"}, {"fecha": "2026-08-29", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Viernes", "plataforma": "Instagram Feed", "tipo": "Producto — Sēva Carbón", "hook": "Shampoo barato vs. Sēva Carbón — cuál te está arruinando el cuero cabelludo de verdad.", "visual": "PENDIENTE — foto de producto de Carbón aún no generada", "caption": "Shampoo barato vs. Sēva Carbón — cuál te está arruinando el cuero cabelludo de verdad.\n\nCarbón activado + arcilla negra, en barra sólida. Detox real para cabello graso, sin sulfatos.\n\n45-70 lavados por barra.", "hashtags": "#sevacarbon #cabellograso #detoxcapilar #shampooenbarra #seva", "estado": "pendiente", "notas": "Necesita foto de producto.", "id": "seed-2026-08-29-4"}, {"fecha": "2026-08-30", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Sábado", "plataforma": "Stories", "tipo": "Repost ligero", "hook": "Repost del carrusel del lunes", "visual": "Repost del carrusel de lanzamiento con sticker de encuesta '¿Ya lo viste? 👀'", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Segunda vida del contenido del lunes sin producir nada nuevo.", "id": "seed-2026-08-30-5"}, {"fecha": "2026-08-31", "semana": 1, "tema_semana": "Lanzamiento de marca", "dia_semana": "Domingo", "plataforma": "Stories", "tipo": "Pregunta a la comunidad", "hook": "¿Qué te gustaría saber de Sēva antes de probarlo?", "visual": "Sticker de pregunta abierta", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Insumo directo para contenido de la semana 2.", "id": "seed-2026-08-31-6"}, {"fecha": "2026-09-01", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Lunes", "plataforma": "Instagram Feed", "tipo": "Educativo", "hook": "3 errores que cometes con tu shampoo líquido sin saberlo", "visual": "PENDIENTE — carrusel de 3-4 slides tipo lista", "caption": "3 errores que cometes con tu shampoo líquido sin saberlo (uno te está costando dinero cada mes).\n\nDesliza para verlos →", "hashtags": "#seva #shampooenbarra #cuidadocapilar #erroresdebelleza", "estado": "pendiente", "notas": "Usar formato de carrusel 'lista' del banco de hooks.", "id": "seed-2026-09-01-7"}, {"fecha": "2026-09-02", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Martes", "plataforma": "Stories", "tipo": "Detrás de cámaras", "hook": "Proceso de formulación", "visual": "BTS: orden de fusión Alcohol Cetílico → SCI → Betaína de Coco. Explicar por qué importa el orden.", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-02-8"}, {"fecha": "2026-09-03", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Miércoles", "plataforma": "Instagram Feed", "tipo": "Producto — Ingredientes Romero", "hook": "Copy de ingredientes formato: nombre en negrita → gancho en cursiva → beneficio", "visual": "PENDIENTE — foto macro de ingredientes de Romero", "caption": "Romero. Porque tu cabello merece algo más que promesas — merece raíces fuertes.\n\nEstimula la circulación del cuero cabelludo y fortalece la fibra capilar desde la raíz.", "hashtags": "#sevaromero #romero #ingredientesnaturales #anticaida", "estado": "pendiente", "notas": "Aplicar formato emocional ya definido en la marca.", "id": "seed-2026-09-03-9"}, {"fecha": "2026-09-04", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Jueves", "plataforma": "Stories", "tipo": "Encuesta", "hook": "¿Sabías que una barra Sēva dura hasta 45-70 lavados?", "visual": "Sticker de encuesta sí/no", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Refuerza el value prop de longevidad de la barra.", "id": "seed-2026-09-04-10"}, {"fecha": "2026-09-05", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Viernes", "plataforma": "Instagram Feed", "tipo": "Producto — Ingredientes Carbón", "hook": "Copy de ingredientes formato: nombre en negrita → gancho en cursiva → beneficio", "visual": "PENDIENTE — foto macro de ingredientes de Carbón", "caption": "Carbón activado. Porque el cabello graso no necesita más producto — necesita el producto correcto.\n\nAbsorbe el exceso de grasa y purifica el cuero cabelludo sin resecar.", "hashtags": "#sevacarbon #carbonactivado #ingredientesnaturales #cabellograso", "estado": "pendiente", "notas": "Aplicar formato emocional ya definido en la marca.", "id": "seed-2026-09-05-11"}, {"fecha": "2026-09-06", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Sábado", "plataforma": "Stories", "tipo": "Repost destacado", "hook": "Mejor momento de la semana", "visual": "Repost del post con más interacción de la semana", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-06-12"}, {"fecha": "2026-09-07", "semana": 2, "tema_semana": "Por qué shampoo en barra", "dia_semana": "Domingo", "plataforma": "Stories", "tipo": "Q&A abierto", "hook": "Pregúntame lo que quieras sobre Sēva", "visual": "Sticker de preguntas", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-07-13"}, {"fecha": "2026-09-08", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Lunes", "plataforma": "Instagram Feed", "tipo": "Lifestyle / Viaje", "hook": "El shampoo que cabe en tu maleta de mano (y no gotea)", "visual": "PENDIENTE — foto de barra en contexto de viaje (morral, neceser)", "caption": "El shampoo que cabe en tu maleta de mano (y no gotea).\n\nSin líquidos que declarar, sin fugas en el equipaje. Tu ritual viaja contigo.", "hashtags": "#sevaviaje #viajarsinplastico #shampooenbarra #seva", "estado": "pendiente", "notas": "Ángulo de campaña de temporada (jul-ago) ya documentado en calendario.md.", "id": "seed-2026-09-08-14"}, {"fecha": "2026-09-09", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Martes", "plataforma": "Stories", "tipo": "Detrás de cámaras", "hook": "Cómo empacar la barra para viaje", "visual": "BTS mostrando la barra en su empaque de viaje", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-09-15"}, {"fecha": "2026-09-10", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Miércoles", "plataforma": "Instagram Feed", "tipo": "Prueba social / UGC", "hook": "Primer testimonio real o prompt de UGC", "visual": "PENDIENTE — depende de si ya hay reseñas reales para esta fecha", "caption": "Si aún no hay reseñas: '¿Ya probaste Sēva? Mándanos tu primera impresión — la compartimos aquí.' Si ya hay reseña real, usarla en su lugar.", "hashtags": "#sevareview #testimonio #seva", "estado": "pendiente", "notas": "REVISAR más cerca de la fecha si ya existen reseñas reales de clientas.", "id": "seed-2026-09-10-16"}, {"fecha": "2026-09-11", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Jueves", "plataforma": "Stories", "tipo": "Encuesta", "hook": "¿Ya probaste Sēva?", "visual": "Sticker de encuesta sí/no", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-11-17"}, {"fecha": "2026-09-12", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Viernes", "plataforma": "Instagram Feed", "tipo": "Value prop — costo por lavado", "hook": "Una barra = 45-70 lavados. Haz cuentas de cuánto ahorras.", "visual": "PENDIENTE — gráfico o carrusel comparativo de costo por lavado", "caption": "Una barra = 45-70 lavados. Haz cuentas de cuánto ahorras vs. tu shampoo líquido de siempre.\n\nEl precio más alto al inicio es el costo por lavado más bajo del mercado.", "hashtags": "#sevabar #ahorroreal #costoporlavado #seva", "estado": "pendiente", "notas": "El argumento de valor más fuerte de la marca — dedicarle una pieza propia.", "id": "seed-2026-09-12-18"}, {"fecha": "2026-09-13", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Sábado", "plataforma": "Stories/Reel", "tipo": "Reel 'El Protocolo' (si está listo)", "hook": "Contenido ASMR/proceso con IA", "visual": "Si 'El Protocolo' (Higgsfield/Kling) ya está terminado, publicar aquí. Si no, repost ligero.", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Depende del avance de producción del Reel — revisar estado antes de esta fecha.", "id": "seed-2026-09-13-19"}, {"fecha": "2026-09-14", "semana": 3, "tema_semana": "Verano consciente", "dia_semana": "Domingo", "plataforma": "Stories", "tipo": "Cierre de semana", "hook": "Resumen y preguntas abiertas", "visual": "Sticker de preguntas", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-14-20"}, {"fecha": "2026-09-15", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Lunes", "plataforma": "Instagram Feed", "tipo": "Storytelling — origen de marca", "hook": "El día que dejé de comprar shampoo líquido fue el mejor día para mi cabello. Así nació Sēva.", "visual": "PENDIENTE — foto/video de Alonso o del espacio de trabajo real", "caption": "El día que dejé de comprar shampoo líquido fue el mejor día para mi cabello.\n\nAsí nació Sēva: de una frustración personal a una marca hecha a mano, batch por batch, en México.", "hashtags": "#sevastory #origendemarca #hechoenmexico #emprendimiento", "estado": "pendiente", "notas": "Pieza de fundador — construye confianza y diferenciación real.", "id": "seed-2026-09-15-21"}, {"fecha": "2026-09-16", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Martes", "plataforma": "Stories", "tipo": "Detrás de cámaras", "hook": "Alonso formulando en batch real", "visual": "BTS auténtico del proceso, no producido", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-16-22"}, {"fecha": "2026-09-17", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Miércoles", "plataforma": "Instagram Feed", "tipo": "Comparación de precio real", "hook": "Costo por lavado: Sēva vs. shampoo líquido tradicional", "visual": "PENDIENTE — carrusel o gráfico comparativo", "caption": "¿Cuánto te cuesta realmente lavarte el cabello? Comparamos costo por lavado: Sēva vs. líquido tradicional.\n\nEl resultado te va a sorprender.", "hashtags": "#sevabar #comparacionreal #costoporlavado #seva", "estado": "pendiente", "notas": "Refuerza el value prop con números concretos — completar cuando haya datos de costo reales (Sección 4 del documento maestro).", "id": "seed-2026-09-17-23"}, {"fecha": "2026-09-18", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Jueves", "plataforma": "Stories", "tipo": "Encuesta", "hook": "Pregunta abierta sobre la experiencia del mes", "visual": "Sticker de pregunta", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-18-24"}, {"fecha": "2026-09-19", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Viernes", "plataforma": "Instagram Feed", "tipo": "Reel 'El Protocolo' o producto adicional", "hook": "Contenido de video o pieza de producto", "visual": "Si el Reel está listo, publicar aquí. Si no, pieza adicional de producto (ej. Linaza si ya está lista).", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Revisar estado de producción de video antes de esta fecha.", "id": "seed-2026-09-19-25"}, {"fecha": "2026-09-20", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Sábado", "plataforma": "Stories", "tipo": "Ligero", "hook": "Contenido de fin de semana", "visual": "Repost o contenido casual", "caption": null, "hashtags": null, "estado": "pendiente", "notas": null, "id": "seed-2026-09-20-26"}, {"fecha": "2026-09-21", "semana": 4, "tema_semana": "Storytelling y conversión", "dia_semana": "Domingo", "plataforma": "Stories", "tipo": "Cierre de mes", "hook": "Resumen del mes 1 + pregunta para mes 2", "visual": "'Así fue nuestro primer mes. ¿Qué quieres ver en el mes 2?' — sticker de pregunta", "caption": null, "hashtags": null, "estado": "pendiente", "notas": "Cierre del primer mes completo de contenido.", "id": "seed-2026-09-21-27"}];
+
+let CACHE = { items: [] };
+let S = { tab: 'semana', weekFilter: 1, editId: null, statusSel: 'pendiente' };
+
+const DB = {
+  async load() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      CACHE.items = JSON.parse(raw);
+    } else {
+      CACHE.items = SEED_ITEMS;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(CACHE.items));
+    }
+  },
+  async save(item) {
+    const idx = CACHE.items.findIndex(i => i.id === item.id);
+    if (idx >= 0) CACHE.items[idx] = item; else CACHE.items.push(item);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(CACHE.items));
+  },
+  async delete(id) {
+    CACHE.items = CACHE.items.filter(i => i.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(CACHE.items));
+  },
+};
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+function fmtDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('es-MX', { day:'numeric', month:'short' });
+}
+
+function toast(msg, dur=2600){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), dur);
+}
+
+function openModal(id){ document.getElementById(id).classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+function closeMO(e,id){ if(e.target===e.currentTarget) closeModal(id); }
+
+/* ---------- Render: barra de semanas ---------- */
+function renderWeekbar(){
+  const weeks = [...new Set(CACHE.items.map(i=>i.semana))].sort((a,b)=>a-b);
+  const bar = document.getElementById('weekbar');
+  bar.innerHTML = weeks.map(w => {
+    const theme = CACHE.items.find(i=>i.semana===w)?.tema_semana || '';
+    return `<div class="wk-chip ${w===S.weekFilter?'active':''}" onclick="selectWeek(${w})">Semana ${w}</div>`;
+  }).join('');
+}
+
+function selectWeek(w){
+  S.weekFilter = w;
+  S.tab = 'semana';
+  render();
+}
+
+function setTab(tab){
+  S.tab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  render();
+}
+
+/* ---------- Render: tema de la semana ---------- */
+function renderThemebar(){
+  const el = document.getElementById('themebar');
+  if (S.tab !== 'semana'){ el.innerHTML=''; return; }
+  const weekItems = CACHE.items.filter(i=>i.semana===S.weekFilter);
+  if (!weekItems.length){ el.innerHTML=''; return; }
+  const theme = weekItems[0].tema_semana || '';
+  const dates = weekItems.map(i=>i.fecha).sort();
+  const range = dates.length ? `${fmtDate(dates[0])} — ${fmtDate(dates[dates.length-1])}` : '';
+  el.innerHTML = `
+    <div class="label">Semana ${S.weekFilter}</div>
+    <h2>${theme}</h2>
+    <div class="range">${range}</div>
+  `;
+}
+
+/* ---------- Render: días ---------- */
+function renderDays(){
+  const el = document.getElementById('days');
+  let items = S.tab === 'semana'
+    ? CACHE.items.filter(i=>i.semana===S.weekFilter)
+    : CACHE.items;
+
+  if (!items.length){
+    el.innerHTML = `<div style="text-align:center; padding:60px 20px; color:var(--tx2);">
+      <div style="font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--forest); margin-bottom:8px;">Sin contenido todavía</div>
+      Toca el botón + para agregar tu primera publicación.
+    </div>`;
+    return;
+  }
+
+  // agrupar por fecha
+  const byDate = {};
+  items.forEach(i => { (byDate[i.fecha] = byDate[i.fecha] || []).push(i); });
+  const dates = Object.keys(byDate).sort();
+
+  const today = todayISO();
+
+  el.innerHTML = dates.map(fecha => {
+    const dayItems = byDate[fecha].sort((a,b)=> (a.plataforma||'').localeCompare(b.plataforma||''));
+    const dname = dayItems[0].dia_semana || new Date(fecha+'T00:00:00').toLocaleDateString('es-MX',{weekday:'long'});
+    const isToday = fecha === today;
+    return `
+      <div class="day-group">
+        <div class="day-hdr">
+          <span class="dname">${dname}</span>
+          <span class="ddate">${fmtDate(fecha)}</span>
+          ${isToday ? '<span class="today-badge">HOY</span>' : ''}
+        </div>
+        ${dayItems.map(cardHTML).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function cardHTML(item){
+  const estado = item.estado || 'pendiente';
+  const hookText = item.hook || item.tipo || 'Sin título';
+  return `
+    <div class="card ${estado}" onclick="openDetail('${item.id}')">
+      <div class="card-top">
+        <div class="card-plat">${item.plataforma || ''}</div>
+        <div class="card-status ${estado}">${estado}</div>
+      </div>
+      <div class="card-tipo">${item.tipo || ''}</div>
+      <div class="card-hook">${(hookText||'').slice(0,110)}${(hookText||'').length>110?'…':''}</div>
+    </div>
+  `;
+}
+
+function render(){
+  renderWeekbar();
+  renderThemebar();
+  renderDays();
+}
+
+/* ---------- Detalle ---------- */
+function openDetail(id){
+  const item = CACHE.items.find(i=>i.id===id);
+  if (!item) return;
+  const body = document.getElementById('detailBody');
+  const val = (v) => v ? `<div class="val">${v}</div>` : `<div class="val empty">— sin definir —</div>`;
+  body.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-top:4px;">
+      <div>
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--tx2); font-weight:700;">
+          ${item.plataforma || ''} · ${item.dia_semana || ''} ${fmtDate(item.fecha)}
+        </div>
+        <div style="font-size:15px; font-weight:600; margin-top:3px;">${item.tipo || ''}</div>
+      </div>
+      <div class="card-status ${item.estado}">${item.estado}</div>
+    </div>
+    <div class="detail-hook">${item.hook || ''}</div>
+
+    <div class="detail-block">
+      <div class="lbl">Visual</div>
+      ${val(item.visual)}
+    </div>
+    <div class="detail-block">
+      <div class="lbl">Caption</div>
+      ${val(item.caption)}
+    </div>
+    <div class="detail-block">
+      <div class="lbl">Hashtags</div>
+      ${val(item.hashtags)}
+    </div>
+    <div class="detail-block">
+      <div class="lbl">Notas</div>
+      ${val(item.notas)}
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="closeModal('modalDetail'); openEdit('${item.id}')">Editar</button>
+    </div>
+  `;
+  openModal('modalDetail');
+}
+
+/* ---------- Crear / Editar ---------- */
+function openNew(){
+  S.editId = null;
+  document.getElementById('editTitle').textContent = 'Nueva publicación';
+  document.getElementById('f_fecha').value = todayISO();
+  document.getElementById('f_plataforma').value = 'Instagram Feed';
+  document.getElementById('f_tipo').value = '';
+  document.getElementById('f_hook').value = '';
+  document.getElementById('f_visual').value = '';
+  document.getElementById('f_caption').value = '';
+  document.getElementById('f_hashtags').value = '';
+  document.getElementById('f_notas').value = '';
+  document.getElementById('btnDelete').style.display = 'none';
+  setStatus('pendiente');
+  openModal('modalEdit');
+}
+
+function openEdit(id){
+  const item = CACHE.items.find(i=>i.id===id);
+  if (!item) return;
+  S.editId = id;
+  document.getElementById('editTitle').textContent = 'Editar publicación';
+  document.getElementById('f_fecha').value = item.fecha;
+  document.getElementById('f_plataforma').value = item.plataforma || 'Instagram Feed';
+  document.getElementById('f_tipo').value = item.tipo || '';
+  document.getElementById('f_hook').value = item.hook || '';
+  document.getElementById('f_visual').value = item.visual || '';
+  document.getElementById('f_caption').value = item.caption || '';
+  document.getElementById('f_hashtags').value = item.hashtags || '';
+  document.getElementById('f_notas').value = item.notas || '';
+  document.getElementById('btnDelete').style.display = 'block';
+  setStatus(item.estado || 'pendiente');
+  openModal('modalEdit');
+}
+
+function setStatus(s){
+  S.statusSel = s;
+  ['pendiente','listo','publicado'].forEach(k=>{
+    document.getElementById('stat_'+k).className = 'status-opt' + (k===s?' sel-'+k:'');
+  });
+}
+
+async function saveItem(){
+  const fecha = document.getElementById('f_fecha').value;
+  if (!fecha){ toast('Falta la fecha'); return; }
+
+  const d = new Date(fecha+'T00:00:00');
+  const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+  // calcular número de semana relativo a la semana 1 ya existente (o crear semana nueva)
+  let semana = 1, tema = '';
+  const existing = CACHE.items.find(i=>i.fecha===fecha);
+  if (S.editId){
+    const cur = CACHE.items.find(i=>i.id===S.editId);
+    semana = cur.semana; tema = cur.tema_semana;
+  } else if (existing){
+    semana = existing.semana; tema = existing.tema_semana;
+  } else {
+    // usar la semana actualmente filtrada como default razonable
+    semana = S.weekFilter || 1;
+    const sample = CACHE.items.find(i=>i.semana===semana);
+    tema = sample ? sample.tema_semana : 'Sin definir';
+  }
+
+  const item = {
+    id: S.editId || uid(),
+    fecha, semana, tema_semana: tema,
+    dia_semana: diasSemana[d.getDay()],
+    plataforma: document.getElementById('f_plataforma').value,
+    tipo: document.getElementById('f_tipo').value,
+    hook: document.getElementById('f_hook').value,
+    visual: document.getElementById('f_visual').value,
+    caption: document.getElementById('f_caption').value,
+    hashtags: document.getElementById('f_hashtags').value,
+    notas: document.getElementById('f_notas').value,
+    estado: S.statusSel,
+  };
+
+  // optimistic update
+  const idx = CACHE.items.findIndex(i=>i.id===item.id);
+  if (idx>=0) CACHE.items[idx] = {...CACHE.items[idx], ...item}; else CACHE.items.push(item);
+  render();
+  closeModal('modalEdit');
+  toast('Guardado');
+
+  try { await DB.save(item); } catch(e){ toast('Error al guardar en la nube'); console.error(e); }
+}
+
+async function deleteItem(){
+  if (!S.editId) return;
+  if (!confirm('¿Eliminar esta publicación?')) return;
+  const id = S.editId;
+  CACHE.items = CACHE.items.filter(i=>i.id!==id);
+  render();
+  closeModal('modalEdit');
+  toast('Eliminado');
+  try { await DB.delete(id); } catch(e){ toast('Error al eliminar en la nube'); console.error(e); }
+}
+
+/* ---------- Init ---------- */
+(async () => {
+  await DB.load();
+  if (CACHE.items.length){
+    S.weekFilter = Math.min(...CACHE.items.map(i=>i.semana));
+  }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  render();
+})();
+</script>
+</body>
+</html>
